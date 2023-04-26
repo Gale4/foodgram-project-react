@@ -1,0 +1,50 @@
+from django.db import models
+from django.contrib.auth.models import AbstractUser
+
+
+class User(AbstractUser):
+    email = models.EmailField(
+        max_length=254,
+        blank=False,
+        verbose_name='Почта'
+    )
+    username = models.CharField(
+        max_length=150,
+        unique=True,
+        blank=False,
+        verbose_name='Псевдоним'
+    )
+    first_name = models.CharField(
+        max_length=30,
+        blank=False,
+        verbose_name='Имя'
+    )
+    last_name = models.CharField(
+        max_length=150,
+        blank=False,
+        verbose_name='Фамилия'
+    )
+    password = models.CharField(
+        max_length=128,
+        blank=False
+    )
+
+    class Meta:
+        verbose_name = 'Пользователь'
+        verbose_name_plural = 'Пользователи'
+
+
+class Subscribe(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='subscriber'
+    )
+    author = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='author'
+    )
+
+    class Meta:
+        unique_together = ('user', 'author')

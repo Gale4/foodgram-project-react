@@ -1,0 +1,6 @@
+Django==3.2.18
+djangorestframework==3.12.4
+psycopg2-binary==2.8.6
+djangorestframework-simplejwt==4.7.2
+djoser==2.1.0
+Pillow==9.5.0
