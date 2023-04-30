@@ -22,6 +22,7 @@ class Ingredient(models.Model):
     class Meta:
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
+        ordering = ['name']
     
     def __str__(self):
         return self.name
@@ -67,6 +68,9 @@ class RecipeIngredients(models.Model):
     ingredient = models.ForeignKey(Ingredient, on_delete=models.CASCADE)
     recipe = models.ForeignKey(Recipe, on_delete=models.CASCADE)
     amount = models.CharField(max_length=200, blank=False)
+
+    def __str__(self):
+        return f'{self.recipe} {self.ingredient}'
 
 
 class TagRecipe(models.Model):
