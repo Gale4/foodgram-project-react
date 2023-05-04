@@ -30,7 +30,7 @@ class User(AbstractUser):
 
 
 class Subscribe(models.Model):
-    user = models.ForeignKey(
+    subscriber = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='subscriber'
@@ -42,4 +42,11 @@ class Subscribe(models.Model):
     )
 
     class Meta:
-        unique_together = ('user', 'author')
+        verbose_name = 'Подписка'
+        verbose_name_plural = 'Подписки'
+        constraints = [
+            models.UniqueConstraint(
+                fields=['subscriber', 'author'],
+                name='subscriber_author'
+            ),
+        ]
