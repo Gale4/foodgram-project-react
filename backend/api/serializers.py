@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from recipes.models import Tag, Recipe, Ingredient, RecipeIngredients, GroceryList, Favorite
+from recipes.models import Tag, Recipe, Ingredient, IngredientsInRecipe, GroceryList, Favorite
 from users.models import User, Subscribe
 from djoser.serializers import UserSerializer, UserCreateSerializer
 import base64
@@ -43,6 +43,13 @@ class CustomUserCreateSerializer(UserCreateSerializer):
         fields = ('email', 'username', 'first_name', 'last_name', 'password')
 
 
+class TagSerializer(serializers.ModelSerializer):
+    """Отображение тегов."""
+
+    class Meta:
+        model = Tag
+        fields = ('id', 'name', 'color', 'slug')
+
 
 class IngredientSerializer(serializers.ModelSerializer):
     """Отображение ингридиента."""
@@ -52,11 +59,11 @@ class IngredientSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'measurement_unit')
 
 
-class IngredientAmountInteractSerializer(serializers.ModelSerializer):
-    """Отображение ингредиента в рецепте."""
+class IngredientAmountSerializer(serializers.ModelSerializer):
+    """Добавление ингредиента в рецепт."""
 
-    #id = serializers.IntegerField()
-    amount = serializers.IntegerField(write_only=True, )
+    id = serializers.IntegerField()
+    amount = serializers.IntegerField()
 
     def validate_amount(self, value):
         if value < 1:
@@ -64,25 +71,29 @@ class IngredientAmountInteractSerializer(serializers.ModelSerializer):
         return value
 
     class Meta:
-        model = RecipeIngredients
+        model = IngredientsInRecipe
         fields = ('id', 'amount')
 
 
-class TagSerializer(serializers.ModelSerializer):
-    """Отображение тегов."""
+class IngredientsRecipeSerializer(serializers.ModelSerializer):
+    """Отображение ингредиентов в рецепте."""
+    id = serializers.ReadOnlyField(source='ingredient.id')
+    name = serializers.ReadOnlyField(source='ingredient.name')
+    measurement_unit = serializers.ReadOnlyField(source='ingredient.measurement_unit')
 
     class Meta:
-        model = Tag
-        fields = ('id', 'name', 'color', 'slug')
+        model = IngredientsInRecipe
+        fields = ('id', 'name', 'measurement_unit', 'amount')
+
 
 class RecipeSerializer(serializers.ModelSerializer):
     """Отображение рецепта."""
 
-    ingredients = IngredientAmountInteractSerializer(many=True)
+    ingredients = IngredientsRecipeSerializer(many=True, source='ingredients_in')
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
     author = CustomUserSerializer(read_only=True)
-    #tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)
+    tags = serializers.PrimaryKeyRelatedField(queryset=Tag.objects.all(), many=True)
 
 
     def get_is_favorited(self, obj):
@@ -107,30 +118,36 @@ class RecipeSerializer(serializers.ModelSerializer):
 class RecipeCreateSerializer(serializers.ModelSerializer):
     """Добавление рецепта."""
 
-    ingredients = IngredientAmountInteractSerializer(many=True)
-    image = Base64ImageField(required=True)
+    ingredients = IngredientAmountSerializer(many=True)
+    tags = serializers.PrimaryKeyRelatedField(many=True, queryset=Tag.objects.all())
     image = Base64ImageField(required=True)
 
 
     class Meta:
         model = Recipe
         fields = ('ingredients', 'tags', 'image', 'name', 'text', 'cooking_time')
-
+    
 
     def validate_cooking_time(self, value):
         if value < 1:
             raise serializers.ValidationError('Неправильное время готовки.')
         return value
-    
+
+    def create_tags(self, tags, recipe):
+            recipe.tags.set(tags)
+
+    def create_ingredients(self, ingredients, recipe):
+        for i in ingredients:
+            ingredient = Ingredient.objects.get(pk=i['id'])
+            IngredientsInRecipe.objects.create(
+                ingredient=ingredient, recipe=recipe, amount=i['amount']
+            )
+
     def create(self, validated_data):
-        request = self.context.get('request')
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
-        recipe = Recipe.objects.create(**validated_data)
-
-        for ingredient in ingredients:
-            current_ingredient, status = Ingredient.objects.get_or_create(
-                **ingredient)
-        RecipeIngredients.objects.create(
-                ingredient=current_ingredient, recipe=recipe)
+        user = self.context.get('request').user
+        recipe = Recipe.objects.create(**validated_data, author=user)
+        self.create_ingredients(ingredients, recipe)
         return recipe
+    

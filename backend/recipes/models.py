@@ -6,8 +6,8 @@ from users.models import User
 class Tag(models.Model):
     """Модель тега."""
 
-    name = models.CharField(max_length=200)
-    color = models.CharField(max_length=7)
+    name = models.CharField(max_length=200, unique=True)
+    color = models.CharField(max_length=7, unique=True)
     slug = models.SlugField(unique=True)
 
     class Meta:
@@ -27,7 +27,13 @@ class Ingredient(models.Model):
     class Meta:
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
-        ordering = ['name']
+        #ordering = ['name']
+        constraints = (
+            models.UniqueConstraint(
+                fields=('name', 'measurement_unit'),
+                name='unique_ingredients',
+            ),
+        )
     
     def __str__(self):
         return self.name
@@ -38,21 +44,23 @@ class Recipe(models.Model):
 
     name = models.CharField(
         max_length=200,
-        verbose_name='Название'
-        )
+        verbose_name='Название')
+    
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='recipes'
         )
+    
     text = models.TextField(blank=False)
-    ingredients = models.ManyToManyField(
-        Ingredient,
-        through='RecipeIngredients',
-        related_name='recipes'
-        )
 
-    tags = models.ManyToManyField(Tag)
+    ingredients = models.ManyToManyField(
+        to=Ingredient,
+        through='IngredientsInRecipe',
+        verbose_name='Ингредиенты'
+    )
+
+    tags = models.ManyToManyField(Tag, through='TagRecipe')
 
     image = models.ImageField(
         upload_to='recipes/images/',
@@ -79,19 +87,43 @@ class Recipe(models.Model):
         return self.name
 
 
-class RecipeIngredients(models.Model):
+class TagRecipe(models.Model):
+    tag = models.ForeignKey(
+        to=Tag,
+        on_delete=models.CASCADE,
+        related_name='in_recipe'
+        )
+    recipe = models.ForeignKey(
+        to=Recipe,
+        on_delete=models.CASCADE,
+        related_name='tags_in'
+        )
+    
+    class Meta:
+        constraints = (
+            models.UniqueConstraint(
+                fields=('recipe_id', 'tag_id'),
+                name='unique_tag',
+            ),
+        )
+
+    def __str__(self):
+        return f'{self.tag} {self.recipe}'
+
+
+class IngredientsInRecipe(models.Model):
     """Связь ингредиента с рецептом."""
 
     ingredient = models.ForeignKey(
-        Ingredient,
+        to=Ingredient,
         on_delete=models.CASCADE,
-        related_name='ingredient_amount',
-        )
+        related_name='in_recipe')
+    
     recipe = models.ForeignKey(
-        Recipe,
+        to=Recipe,
         on_delete=models.CASCADE,
-        related_name='ingredient_amount',
-        )
+        related_name='ingredients_in')
+    
     amount = models.PositiveSmallIntegerField(default=1)
 
     class Meta:
@@ -125,7 +157,7 @@ class Favorite(models.Model):
 
     user = models.ForeignKey(
         User,
-        related_name='is_favorited',
+        related_name='favorites',
         on_delete=models.CASCADE
         )
     recipe = models.ForeignKey(

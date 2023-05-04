@@ -25,11 +25,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if self.action == 'create' or self.action == 'partial_update':
             return RecipeCreateSerializer
         return RecipeSerializer
-
+'''
     def perform_create(self, serializer):
         serializer.is_valid(raise_exception=True)
         serializer.save(author=self.request.user)
-
+'''
 '''
     @api_view(['PATCH',])
     def patch(request, pk):
