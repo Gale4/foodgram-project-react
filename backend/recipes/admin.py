@@ -1,9 +1,9 @@
 from django.contrib import admin
-from .models import Recipe, Ingredient, Tag, Favorite, IngredientsInRecipe
+from .models import Recipe, Ingredient, Tag, Favorite, RecipeIngredients
 
 class IngredientAmountInline(admin.TabularInline):
     min_num = 1
-    model = IngredientsInRecipe
+    model = RecipeIngredients
 
 class RecipeAdmin(admin.ModelAdmin):
     list_display = ('name', 'author')

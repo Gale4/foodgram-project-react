@@ -27,7 +27,7 @@ class Ingredient(models.Model):
     class Meta:
         verbose_name = 'Ингредиент'
         verbose_name_plural = 'Ингредиенты'
-        #ordering = ['name']
+        ordering = ['name']
         constraints = (
             models.UniqueConstraint(
                 fields=('name', 'measurement_unit'),
@@ -55,8 +55,8 @@ class Recipe(models.Model):
     text = models.TextField(blank=False)
 
     ingredients = models.ManyToManyField(
-        to=Ingredient,
-        through='IngredientsInRecipe',
+        Ingredient,
+        through='RecipeIngredients',
         verbose_name='Ингредиенты'
     )
 
@@ -88,15 +88,17 @@ class Recipe(models.Model):
 
 
 class TagRecipe(models.Model):
+    """Связь тега с рецептом."""
+
     tag = models.ForeignKey(
-        to=Tag,
+        Tag,
         on_delete=models.CASCADE,
-        related_name='in_recipe'
+        related_name='tag_recipe'
         )
     recipe = models.ForeignKey(
-        to=Recipe,
+        Recipe,
         on_delete=models.CASCADE,
-        related_name='tags_in'
+        related_name='tags_recipe'
         )
     
     class Meta:
@@ -111,24 +113,25 @@ class TagRecipe(models.Model):
         return f'{self.tag} {self.recipe}'
 
 
-class IngredientsInRecipe(models.Model):
+class RecipeIngredients(models.Model):
     """Связь ингредиента с рецептом."""
 
     ingredient = models.ForeignKey(
-        to=Ingredient,
+        Ingredient,
         on_delete=models.CASCADE,
-        related_name='in_recipe')
+        related_name='in_recipe'
+    )
     
     recipe = models.ForeignKey(
-        to=Recipe,
+        Recipe,
         on_delete=models.CASCADE,
-        related_name='ingredients_in')
+        related_name='ingredients_in'
+    )
     
-    amount = models.PositiveSmallIntegerField(default=1)
+    amount = models.IntegerField(default=1)
 
     class Meta:
-        verbose_name = 'Ингредиент'
-        verbose_name_plural = 'Ингредиенты'
+        verbose_name = 'Количество'
     
     def __str__(self):
         return f'{self.recipe} {self.ingredient}'
@@ -139,12 +142,12 @@ class GroceryList(models.Model):
 
     user = models.ForeignKey(
         User,
-        related_name='is_in_shopping_cart',
+        related_name='in_grocery_list',
         on_delete=models.CASCADE
      )
     recipe = models.ForeignKey(
         Recipe,
-        related_name='is_in_shopping_cart',
+        related_name='in_grocery_list',
         on_delete=models.CASCADE
      )
 

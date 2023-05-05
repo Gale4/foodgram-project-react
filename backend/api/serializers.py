@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from recipes.models import Tag, Recipe, Ingredient, IngredientsInRecipe, GroceryList, Favorite
+from recipes.models import Tag, Recipe, Ingredient, RecipeIngredients, GroceryList, Favorite
 from users.models import User, Subscribe
 from djoser.serializers import UserSerializer, UserCreateSerializer
 import base64
@@ -65,24 +65,25 @@ class IngredientAmountSerializer(serializers.ModelSerializer):
     id = serializers.IntegerField()
     amount = serializers.IntegerField()
 
+    class Meta:
+        model = RecipeIngredients
+        fields = ('id', 'amount')
+
     def validate_amount(self, value):
         if value < 1:
             raise serializers.ValidationError('Меньше минимального.')
         return value
 
-    class Meta:
-        model = IngredientsInRecipe
-        fields = ('id', 'amount')
-
 
 class IngredientsRecipeSerializer(serializers.ModelSerializer):
     """Отображение ингредиентов в рецепте."""
+
     id = serializers.ReadOnlyField(source='ingredient.id')
     name = serializers.ReadOnlyField(source='ingredient.name')
     measurement_unit = serializers.ReadOnlyField(source='ingredient.measurement_unit')
 
     class Meta:
-        model = IngredientsInRecipe
+        model = RecipeIngredients
         fields = ('id', 'name', 'measurement_unit', 'amount')
 
 
@@ -126,28 +127,25 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Recipe
         fields = ('ingredients', 'tags', 'image', 'name', 'text', 'cooking_time')
-    
 
-    def validate_cooking_time(self, value):
-        if value < 1:
-            raise serializers.ValidationError('Неправильное время готовки.')
-        return value
-
-    def create_tags(self, tags, recipe):
-            recipe.tags.set(tags)
-
-    def create_ingredients(self, ingredients, recipe):
-        for i in ingredients:
-            ingredient = Ingredient.objects.get(pk=i['id'])
-            IngredientsInRecipe.objects.create(
-                ingredient=ingredient, recipe=recipe, amount=i['amount']
-            )
+    def to_representation(self, instance):
+        serializer = RecipeSerializer(
+            instance,
+            context={'request': self.context.get('request')}
+        )
+        return serializer.data
 
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
         user = self.context.get('request').user
         recipe = Recipe.objects.create(**validated_data, author=user)
-        self.create_ingredients(ingredients, recipe)
+        recipe.tags.set(tags)
+        for ingr in ingredients:
+            ingredient = Ingredient.objects.get(id=ingr['id'])
+            RecipeIngredients.objects.create(
+                recipe=recipe,
+                ingredient=ingredient,
+                amount=ingr['amount'],
+            )
         return recipe
-    
