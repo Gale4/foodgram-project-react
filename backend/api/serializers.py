@@ -172,11 +172,28 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         self.add_ingredient(ingredients, instance)
         instance.save()
         return instance
-    
+
 
 class FavoriteSerializer(serializers.ModelSerializer):
-    """Отображение избранного."""
+    """Добавление и удаление рецепта из избранного."""
+
+    user = serializers.IntegerField(source='user.id', write_only=True)
+    recipe = serializers.IntegerField(source='recipe.id', write_only=True)
 
     class Meta:
-        model = Ingredient
-        fields = ('id',)
+        model = Favorite
+        fields = ('id', 'user', 'recipe')
+
+    def validate(self, data):
+        user = data['user']['id']
+        recipe = data['recipe']['id']
+        if Favorite.objects.filter(user=user, recipe__id=recipe).exists():
+            raise serializers.ValidationError({'errors': 'Уже в избранном.'})
+        return data
+
+    
+    def create(self, validated_data):
+        user = validated_data['user']
+        recipe = validated_data['recipe']
+        Favorite.objects.get_or_create(user=user, recipe=recipe)
+        return validated_data

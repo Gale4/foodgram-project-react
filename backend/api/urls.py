@@ -15,7 +15,6 @@ router.register('tags', TagViewSet, basename='tags')
 urlpatterns = [
     #path('recipes/<int:id>/shopping_cart/'),
     #path('recipes/download_shopping_cart/', download_shopping_cart),
-    #path('recipes/<int:pk>/ingredients/', FavoriteViewSet.as_view()),
     path('', include('users.urls')),
     path('', include(router.urls)),
 ]
