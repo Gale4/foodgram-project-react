@@ -44,13 +44,14 @@ class Recipe(models.Model):
 
     name = models.CharField(
         max_length=200,
-        verbose_name='Название')
+        verbose_name='Название'
+    )
     
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='recipes'
-        )
+    )
     
     text = models.TextField(blank=False)
 
@@ -94,12 +95,12 @@ class TagRecipe(models.Model):
         Tag,
         on_delete=models.CASCADE,
         related_name='tag_recipe'
-        )
+    )
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
         related_name='tags_recipe'
-        )
+    )
     
     class Meta:
         constraints = (
@@ -144,12 +145,12 @@ class GroceryList(models.Model):
         User,
         related_name='in_grocery_list',
         on_delete=models.CASCADE
-     )
+    )
     recipe = models.ForeignKey(
         Recipe,
         related_name='in_grocery_list',
         on_delete=models.CASCADE
-     )
+        )
 
     class Meta:
         verbose_name = 'Корзина покупок'
@@ -160,14 +161,15 @@ class Favorite(models.Model):
 
     user = models.ForeignKey(
         User,
-        related_name='favorites',
+        related_name='favorite',
         on_delete=models.CASCADE
-        )
+    )
     recipe = models.ForeignKey(
         Recipe,
-        related_name='is_favorited',
+        related_name='favorite',
         on_delete=models.CASCADE
         )
     
     class Meta:
         verbose_name = 'Избранное'
+        verbose_name_plural = 'Избранное'
