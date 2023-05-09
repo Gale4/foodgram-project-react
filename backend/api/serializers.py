@@ -3,6 +3,7 @@ from recipes.models import Tag, Recipe, Ingredient, RecipeIngredients, GroceryLi
 from users.models import User, Subscribe
 from djoser.serializers import UserSerializer, UserCreateSerializer
 import base64
+from rest_framework.validators import UniqueTogetherValidator
 from django.core.files.base import ContentFile
 
 
@@ -196,4 +197,35 @@ class FavoriteSerializer(serializers.ModelSerializer):
         user = validated_data['user']
         recipe = validated_data['recipe']
         Favorite.objects.get_or_create(user=user, recipe=recipe)
+        return validated_data
+
+class SubscribeSerializer(serializers.ModelSerializer):
+    """Сериализатор подписки и отписки."""
+    subscriber = serializers.IntegerField(source='subscriber.id')
+    author = serializers.IntegerField(source='author.id')
+
+    class Meta:
+        model = Subscribe
+        fields = ('id', 'subscriber', 'author')
+
+    def validate(self, data):
+        subscriber = data['subscriber']['id']
+        author = data['author']['id']
+        if Subscribe.objects.filter(
+            subscriber=subscriber,
+            author__id=author
+        ).exists():
+            raise serializers.ValidationError(
+                {'errors': 'Вы уже подписаны на этого автора.'}
+                )
+        if subscriber == author:
+            raise serializers.ValidationError(
+                {'errors': 'Нельзя подписаться на себя.'}
+            )
+        return data
+
+    def create(self, validated_data):
+        subscriber = validated_data['subscriber']
+        author = validated_data['author']
+        Subscribe.objects.get_or_create(subscriber=subscriber, author=author)
         return validated_data

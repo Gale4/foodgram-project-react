@@ -5,7 +5,7 @@ from recipes.models import Recipe, Tag, Ingredient, Favorite
 from djoser.views import UserViewSet
 from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
-from users.models import User
+from users.models import User, Subscribe
 from django.http import JsonResponse
 from .serializers import (RecipeSerializer,
                           IngredientSerializer,
@@ -13,9 +13,11 @@ from .serializers import (RecipeSerializer,
                           CustomUserSerializer, 
                           CustomUserCreateSerializer,
                           RecipeCreateSerializer,
-                          FavoriteSerializer)
+                          FavoriteSerializer,
+                          SubscribeSerializer)
 from djoser.serializers import SetPasswordSerializer
 from django.shortcuts import get_object_or_404
+
 
 class CreateDestroyViewSet(mixins.CreateModelMixin,
                            mixins.DestroyModelMixin,
@@ -37,7 +39,10 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    """Просмотр и редактирование рецептов."""
+    """
+    Просмотр и редактирование рецептов,
+    добавление в список покупок и избранного.
+    """
 
     queryset = Recipe.objects.all()
 
@@ -94,22 +99,29 @@ class CustomUserViewSet(UserViewSet):
         if self.action == 'set_password':
             return SetPasswordSerializer
         return CustomUserSerializer
+    
 
+    @action(detail=True,
+            url_path='subscribe',
+            methods=['post', 'delete'],
+            permission_classes=[permissions.IsAuthenticatedOrReadOnly])
+    def subscribe(self, request, id):
+        """Подписка и отписка от автора."""
 
-class FavoriteViewSet(CreateDestroyViewSet):
-    """Работа с избранным."""
-    queryset = Favorite.objects.all()
-    serializer_class = FavoriteSerializer
-    permission_classes = (permissions.AllowAny,)
+        author = get_object_or_404(User, id=id)
+        serializer = SubscribeSerializer(
+            data={'subscriber': request.user.id, 'author': author.id}
+        )
 
-    def perform_create(self, serializer):
-        recipe = get_object_or_404(Recipe, id=self.kwargs['pk'])
-        serializer.save(user=self.request.user, recipe=recipe)
-
-    def destroy(self, request, *args, **kwargs):
-        instance = get_object_or_404(
-                Favorite,
-                recipe=self.kwargs['recipe_id'],
-                user=request.user)
-        self.perform_destroy(instance)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        if request.method == 'POST':
+            serializer.is_valid(raise_exception=True)
+            serializer.save(author=author, subscriber=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED) 
+        if request.method == 'DELETE':
+            favorite = get_object_or_404(
+                Subscribe,
+                subscriber=request.user,
+                author__id=id
+            )
+            favorite.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
