@@ -3,6 +3,7 @@ from rest_framework import (filters, generics, mixins, permissions, status,
 from rest_framework.views import APIView
 from recipes.models import Recipe, Tag, Ingredient, Favorite
 from djoser.views import UserViewSet
+from django.core.exceptions import ValidationError
 from rest_framework.decorators import api_view, action
 from rest_framework.response import Response
 from users.models import User, Subscribe
@@ -14,7 +15,8 @@ from .serializers import (RecipeSerializer,
                           CustomUserCreateSerializer,
                           RecipeCreateSerializer,
                           FavoriteSerializer,
-                          SubscribeSerializer)
+                          SubscribeSerializer,
+                          SubscribeResponseSerializer)
 from djoser.serializers import SetPasswordSerializer
 from django.shortcuts import get_object_or_404
 
@@ -76,7 +78,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if request.method == 'POST':
             serializer.is_valid(raise_exception=True)
             serializer.save(recipe=recipe, user=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)     
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == 'DELETE':
             favorite = get_object_or_404(
                 Favorite,
@@ -104,10 +106,9 @@ class CustomUserViewSet(UserViewSet):
     @action(detail=True,
             url_path='subscribe',
             methods=['post', 'delete'],
-            permission_classes=[permissions.IsAuthenticatedOrReadOnly])
-    def subscribe(self, request, id):
+            permission_classes=[permissions.IsAuthenticated])
+    def subscribe(self, request, id=None):
         """Подписка и отписка от автора."""
-
         author = get_object_or_404(User, id=id)
         serializer = SubscribeSerializer(
             data={'subscriber': request.user.id, 'author': author.id}
@@ -116,12 +117,14 @@ class CustomUserViewSet(UserViewSet):
         if request.method == 'POST':
             serializer.is_valid(raise_exception=True)
             serializer.save(author=author, subscriber=request.user)
+            # Вызов сериализатора для кастомного ответа.
+            serializer = SubscribeResponseSerializer(author)
             return Response(serializer.data, status=status.HTTP_201_CREATED) 
         if request.method == 'DELETE':
-            favorite = get_object_or_404(
-                Subscribe,
-                subscriber=request.user,
-                author__id=id
-            )
-            favorite.delete()
+            subscribe = get_object_or_404(
+                    Subscribe,
+                    subscriber=request.user,
+                    author__id=id
+                )
+            subscribe.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)

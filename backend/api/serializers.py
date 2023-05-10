@@ -191,8 +191,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
         if Favorite.objects.filter(user=user, recipe__id=recipe).exists():
             raise serializers.ValidationError({'errors': 'Уже в избранном.'})
         return data
-
-    
+  
     def create(self, validated_data):
         user = validated_data['user']
         recipe = validated_data['recipe']
@@ -201,8 +200,9 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
 class SubscribeSerializer(serializers.ModelSerializer):
     """Сериализатор подписки и отписки."""
-    subscriber = serializers.IntegerField(source='subscriber.id')
-    author = serializers.IntegerField(source='author.id')
+
+    subscriber = serializers.IntegerField(source='subscriber.id', write_only=True)
+    author = serializers.IntegerField(source='author.id', write_only=True)
 
     class Meta:
         model = Subscribe
@@ -229,3 +229,28 @@ class SubscribeSerializer(serializers.ModelSerializer):
         author = validated_data['author']
         Subscribe.objects.get_or_create(subscriber=subscriber, author=author)
         return validated_data
+
+
+class RecipeSubscriptionSerializer(serializers.ModelSerializer):
+    """Сериализатор рецепта внутри ответа на подписку."""
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
+
+
+class SubscribeResponseSerializer(CustomUserSerializer):
+    """Сериализатор ответа на подписку."""
+
+    recipes = RecipeSubscriptionSerializer(many=True)
+    recipes_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ('email', 'id', 'username', 'first_name',
+                  'last_name', 'is_subscribed', 'recipes', 'recipes_count')
+    
+    def get_recipes_count(self, obj):
+        """Счётчик рецептов внутри ответа на подписку."""
+        author = User.objects.get(username=obj.username)
+        return Recipe.objects.filter(author=author).count()
