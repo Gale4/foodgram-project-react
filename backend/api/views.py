@@ -150,7 +150,7 @@ class CustomUserViewSet(UserViewSet):
         Возвращает пользователей,
         на которых подписан текущий пользователь.
         """
-        queryset = User.objects.filter(subscriber__subscriber=request.user)
+        queryset = User.objects.filter(author__subscriber=request.user)
         pages = self.paginate_queryset(queryset)
         serializer = SubscribeResponseSerializer(
             pages,

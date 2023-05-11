@@ -233,7 +233,7 @@ class SubscribeSerializer(serializers.ModelSerializer):
 
 
 class RecipeSubscriptionSerializer(serializers.ModelSerializer):
-    """Сериализатор рецепта внутри ответа на подписку."""
+    """Сериализатор рецепта внутри ответа на подписок."""
 
     class Meta:
         model = Recipe
@@ -241,15 +241,11 @@ class RecipeSubscriptionSerializer(serializers.ModelSerializer):
 
 
 class SubscribeResponseSerializer(serializers.ModelSerializer):
-    """Сериализатор ответа на подписку."""
-    '''email = serializers.ReadOnlyField(source='author.email')
-    username = serializers.ReadOnlyField(source='author.username')
-    first_name = serializers.ReadOnlyField(source='author.first_name')
-    last_name = serializers.ReadOnlyField(source='author.last_name')'''
+    """Сериализатор ответа на подписку и списка подписок пользователя."""
+
     is_subscribed = serializers.BooleanField(default=True)
     recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
-    #id = serializers.ReadOnlyField(source='author.id')
 
     class Meta:
         model = User
@@ -262,10 +258,6 @@ class SubscribeResponseSerializer(serializers.ModelSerializer):
             'recipes_limit',
             DEFAULT_RECIPE_LIMIT
         )
-
-        #recipes = obj.author.recipes.all().order_by('-id')[:int(recipes_limit)]
-        #return RecipeSubscriptionSerializer(recipes, many=True).data
-
         return RecipeSubscriptionSerializer(
             obj.recipes.all()[:int(recipes_limit)],
             many=True
