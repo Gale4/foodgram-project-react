@@ -1,9 +1,8 @@
-from rest_framework.routers import DefaultRouter
-from django.urls import include, path
 from django.conf.urls import url
+from django.urls import include, path
+from rest_framework.routers import DefaultRouter
 
-from .views import (RecipeViewSet, IngredientViewSet, TagViewSet)
-
+from .views import IngredientViewSet, RecipeViewSet, TagViewSet
 
 router = DefaultRouter()
 
@@ -13,8 +12,6 @@ router.register('tags', TagViewSet, basename='tags')
 
 
 urlpatterns = [
-    #path('recipes/<int:id>/shopping_cart/'),
-    #path('recipes/download_shopping_cart/', download_shopping_cart),
     path('', include('users.urls')),
     path('', include(router.urls)),
 ]

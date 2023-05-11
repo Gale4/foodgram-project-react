@@ -1,10 +1,9 @@
+import csv
+
 from django.conf import settings
 from django.core.management import BaseCommand
 
 from recipes.models import Ingredient, Tag
-
-import csv
-
 
 TAGS = (
     ('Завтрак', '#E26C2D', 'breakfast'),

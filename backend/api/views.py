@@ -1,25 +1,24 @@
+from django.core.exceptions import ValidationError
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+from djoser.serializers import SetPasswordSerializer
+from djoser.views import UserViewSet
 from rest_framework import (filters, generics, mixins, permissions, status,
                             viewsets)
-from rest_framework.views import APIView
-from recipes.models import Recipe, Tag, Ingredient, Favorite
-from djoser.views import UserViewSet
-from django.core.exceptions import ValidationError
-from rest_framework.decorators import api_view, action
-from rest_framework.response import Response
-from users.models import User, Subscribe
-from django.http import JsonResponse
-from .serializers import (RecipeSerializer,
-                          IngredientSerializer,
-                          TagSerializer,
-                          CustomUserSerializer, 
-                          CustomUserCreateSerializer,
-                          RecipeCreateSerializer,
-                          FavoriteSerializer,
-                          SubscribeSerializer,
-                          SubscribeResponseSerializer)
-from djoser.serializers import SetPasswordSerializer
-from django.shortcuts import get_object_or_404
+from rest_framework.decorators import action, api_view
 from rest_framework.pagination import PageNumberPagination
+from rest_framework.response import Response
+from rest_framework.views import APIView
+
+from recipes.models import Favorite, Ingredient, Recipe, Tag, GroceryList
+from users.models import Subscribe, User
+from .utils import download_shopping_cart
+
+from .serializers import (CustomUserCreateSerializer, CustomUserSerializer,
+                          FavoriteSerializer, IngredientSerializer,
+                          RecipeCreateSerializer, RecipeSerializer,
+                          SubscribeResponseSerializer, SubscribeSerializer,
+                          TagSerializer, GrocerySerializer)
 
 
 class CreateDestroyViewSet(mixins.CreateModelMixin,
@@ -43,7 +42,7 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 
 class RecipeViewSet(viewsets.ModelViewSet):
     """
-    Просмотр и редактирование рецептов,
+    Просмотр и редактирование рецептов
     добавление в список покупок и избранного.
     """
 
@@ -53,15 +52,36 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if self.action == 'create' or self.action == 'partial_update':
             return RecipeCreateSerializer
         return RecipeSerializer
-    
+
+    @action(detail=True,
+            url_path='shopping_cart',
+            methods=['post', 'delete'])
+    def grocery_list(self, request, pk):
+        """Добавление и удаление рецепта в список покупок."""
+        recipe = get_object_or_404(Recipe, id=pk)
+        serializer = GrocerySerializer(
+            data={'user': request.user.id, 'recipe': recipe.id}
+        )
+        if request.method == 'POST':
+            serializer.is_valid(raise_exception=True)
+            serializer.save(recipe=recipe, user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        if request.method == 'DELETE':
+            grocery = get_object_or_404(
+                GroceryList,
+                user=request.user,
+                recipe__id=pk
+            )
+            grocery.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
+
+
     @action(detail=False,
             url_path='download_shopping_cart',
-            methods=['post'],
+            methods=['get'],
             permission_classes=[permissions.AllowAny])
-    def download_shopping_cart(request):
-        user = request.user
-        serializer = CustomUserSerializer(user)
-        return JsonResponse(serializer.data)
+    def download_shopping_cart(self, request):
+        return download_shopping_cart(request)
     
             
     @action(detail=True,
@@ -70,7 +90,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
             permission_classes=[permissions.IsAuthenticatedOrReadOnly])
     def favorite(self, request, pk):
         """Добавление и удаление рецепта из избранного."""
-
         recipe = get_object_or_404(Recipe, id=pk)
         serializer = FavoriteSerializer(
             data={'user': request.user.id, 'recipe': recipe.id}

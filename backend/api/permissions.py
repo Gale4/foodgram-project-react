@@ -1,5 +1,6 @@
 from rest_framework import permissions
 
+
 class IsOwnerOrReadOnly(permissions.IsAuthenticatedOrReadOnly):
     """Разрешение для автора и администратора."""
     

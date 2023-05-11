@@ -1,12 +1,14 @@
-from rest_framework import serializers
-from recipes.models import Tag, Recipe, Ingredient, RecipeIngredients, GroceryList, Favorite
-from users.models import User, Subscribe
-from djoser.serializers import UserSerializer, UserCreateSerializer
 import base64
-from rest_framework.validators import UniqueTogetherValidator
-from django.core.files.base import ContentFile
-from foodgram.settings import DEFAULT_RECIPE_LIMIT
 
+from django.core.files.base import ContentFile
+from djoser.serializers import UserCreateSerializer, UserSerializer
+from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
+
+from foodgram.settings import DEFAULT_RECIPE_LIMIT
+from recipes.models import (Favorite, GroceryList, Ingredient, Recipe,
+                            RecipeIngredients, Tag)
+from users.models import Subscribe, User
 
 
 class Base64ImageField(serializers.ImageField):
@@ -105,24 +107,17 @@ class RecipeSerializer(serializers.ModelSerializer):
                   'text', 'cooking_time')
 
     def get_is_favorited(self, obj):
-        request = self.context.get('request')
-        if request is None or request.user.is_anonymous:
-            return False
-        return Favorite.objects.filter(user=request.user, recipe=obj).exists()
-    
-    def get_is_favorited(self, obj):
         user = self.context.get('request').user
         if user is None or user.is_anonymous:
             return False
-        return obj.favorite.filter(user=user).exists()
+        return obj.favorite.filter(user=user, recipe=obj).exists()
     
     def get_is_in_shopping_cart(self, obj):
         request = self.context.get('request')
         if request is None or request.user.is_anonymous:
             return False
         return GroceryList.objects.filter(user=request.user, recipe=obj).exists()
-   
-      
+
 
 class RecipeCreateSerializer(serializers.ModelSerializer):
     """Добавление и редактирование рецепта."""
@@ -144,6 +139,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         return serializer.data
 
     def add_ingredient(self, ingredients, recipe):
+        """Добавление ингридиета при создании и изменении рецепта."""
         for ingr in ingredients:
             ingredient = Ingredient.objects.get(id=ingr['id'])
             RecipeIngredients.objects.create(
@@ -176,6 +172,39 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
         return instance
 
 
+class RecipeDataSerializer(serializers.ModelSerializer):
+    """Сериализатор коротких данных рецепта."""
+
+    class Meta:
+        model = Recipe
+        fields = ('id', 'name', 'image', 'cooking_time')
+
+
+class GrocerySerializer(serializers.ModelSerializer):
+    """Работа со списком покупок."""
+
+    user = serializers.IntegerField(source='user.id', write_only=True)
+    recipe = serializers.IntegerField(source='recipe.id', write_only=True)
+
+    class Meta:
+        model = GroceryList
+        fields = ('user', 'recipe')
+
+    def validate(self, data):
+        user = data['user']['id']
+        recipe = data['recipe']['id']
+        if GroceryList.objects.filter(user=user, recipe__id=recipe).exists():
+            raise serializers.ValidationError({'errors': 'Уже в списке.'})
+        return data
+    
+    def to_representation(self, instance):
+        serializer = RecipeDataSerializer(
+            instance.recipe,
+            context={'request': self.context.get('request')}
+        )
+        return serializer.data
+
+
 class FavoriteSerializer(serializers.ModelSerializer):
     """Добавление и удаление рецепта из избранного."""
 
@@ -198,6 +227,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
         recipe = validated_data['recipe']
         Favorite.objects.get_or_create(user=user, recipe=recipe)
         return validated_data
+
 
 class SubscribeSerializer(serializers.ModelSerializer):
     """Сериализатор подписки и отписки."""
@@ -232,16 +262,11 @@ class SubscribeSerializer(serializers.ModelSerializer):
         return validated_data
 
 
-class RecipeSubscriptionSerializer(serializers.ModelSerializer):
-    """Сериализатор рецепта внутри ответа на подписок."""
-
-    class Meta:
-        model = Recipe
-        fields = ('id', 'name', 'image', 'cooking_time')
-
-
 class SubscribeResponseSerializer(serializers.ModelSerializer):
-    """Сериализатор ответа на подписку и списка подписок пользователя."""
+    """
+    Сериализатор списка подписок пользователя
+    и ответных данных на подписку.
+    """
 
     is_subscribed = serializers.BooleanField(default=True)
     recipes = serializers.SerializerMethodField()
@@ -258,7 +283,7 @@ class SubscribeResponseSerializer(serializers.ModelSerializer):
             'recipes_limit',
             DEFAULT_RECIPE_LIMIT
         )
-        return RecipeSubscriptionSerializer(
+        return RecipeDataSerializer(
             obj.recipes.all()[:int(recipes_limit)],
             many=True
         ).data

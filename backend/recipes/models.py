@@ -1,6 +1,6 @@
 from django.db import models
-from users.models import User
 
+from users.models import User
 
 
 class Tag(models.Model):
@@ -154,7 +154,13 @@ class GroceryList(models.Model):
         )
 
     class Meta:
-        verbose_name = 'Корзина покупок'
+        verbose_name_plural = 'Корзина покупок'
+        constraints = (
+            models.UniqueConstraint(
+                fields=('user', 'recipe'),
+                name='unique_recipe',
+            ),
+        )
 
 
 class Favorite(models.Model):

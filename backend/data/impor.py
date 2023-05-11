@@ -1,4 +1,5 @@
 import sqlite3
+
 import pandas as pd
 
 df = pd.read_csv('../data/ingredients.csv', names=['name', 'measurement_unit'])

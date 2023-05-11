@@ -1,5 +1,10 @@
 from django.contrib import admin
-from .models import Recipe, Ingredient, Tag, Favorite, RecipeIngredients
+
+from .models import (
+    Favorite, Ingredient, Recipe,
+    RecipeIngredients, Tag, GroceryList
+)
+
 
 class IngredientAmountInline(admin.TabularInline):
     min_num = 1
@@ -24,7 +29,11 @@ class TagAdmin(admin.ModelAdmin):
 class FavoriteAdmin(admin.ModelAdmin):
     list_display = ('recipe', 'user')
 
+class GroceryListAdmin(admin.ModelAdmin):
+    list_display = ('recipe', 'user')
+
 admin.site.register(Recipe, RecipeAdmin)
 admin.site.register(Ingredient, IngredientAdmin)
 admin.site.register(Tag, TagAdmin)
 admin.site.register(Favorite, FavoriteAdmin)
+admin.site.register(GroceryList, GroceryListAdmin)
