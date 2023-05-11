@@ -19,6 +19,7 @@ from .serializers import (RecipeSerializer,
                           SubscribeResponseSerializer)
 from djoser.serializers import SetPasswordSerializer
 from django.shortcuts import get_object_or_404
+from rest_framework.pagination import PageNumberPagination
 
 
 class CreateDestroyViewSet(mixins.CreateModelMixin,
@@ -93,6 +94,7 @@ class CustomUserViewSet(UserViewSet):
     """Работа с пользователетями."""
 
     queryset = User.objects.all()
+    pagination_class = PageNumberPagination
     permission_classes = (permissions.AllowAny,)
 
     def get_serializer_class(self):
@@ -101,6 +103,13 @@ class CustomUserViewSet(UserViewSet):
         if self.action == 'set_password':
             return SetPasswordSerializer
         return CustomUserSerializer
+    
+    '''def get_permissions(self):
+    """
+    Instantiates and returns the list of permissions that this view requires.
+    """
+    if self.action == 'list':
+        permission_classes = [IsAuthenticated]'''
     
 
     @action(detail=True,
@@ -118,8 +127,11 @@ class CustomUserViewSet(UserViewSet):
             serializer.is_valid(raise_exception=True)
             serializer.save(author=author, subscriber=request.user)
             # Вызов сериализатора для кастомного ответа.
-            serializer = SubscribeResponseSerializer(author)
-            return Response(serializer.data, status=status.HTTP_201_CREATED) 
+            serializer = SubscribeResponseSerializer(
+                author,
+                context={'request': request}
+            )
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == 'DELETE':
             subscribe = get_object_or_404(
                     Subscribe,
@@ -128,3 +140,21 @@ class CustomUserViewSet(UserViewSet):
                 )
             subscribe.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=False,
+            url_path='subscriptions',
+            methods=['get'],
+            permission_classes=[permissions.IsAuthenticated])
+    def subscriptions(self, request):
+        """
+        Возвращает пользователей,
+        на которых подписан текущий пользователь.
+        """
+        queryset = User.objects.filter(subscriber__subscriber=request.user)
+        pages = self.paginate_queryset(queryset)
+        serializer = SubscribeResponseSerializer(
+            pages,
+            many=True,
+            context={'request': request}
+        )
+        return self.get_paginated_response(serializer.data)

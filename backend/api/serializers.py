@@ -5,6 +5,7 @@ from djoser.serializers import UserSerializer, UserCreateSerializer
 import base64
 from rest_framework.validators import UniqueTogetherValidator
 from django.core.files.base import ContentFile
+from foodgram.settings import DEFAULT_RECIPE_LIMIT
 
 
 
@@ -239,18 +240,39 @@ class RecipeSubscriptionSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'image', 'cooking_time')
 
 
-class SubscribeResponseSerializer(CustomUserSerializer):
+class SubscribeResponseSerializer(serializers.ModelSerializer):
     """Сериализатор ответа на подписку."""
-
-    recipes = RecipeSubscriptionSerializer(many=True)
+    '''email = serializers.ReadOnlyField(source='author.email')
+    username = serializers.ReadOnlyField(source='author.username')
+    first_name = serializers.ReadOnlyField(source='author.first_name')
+    last_name = serializers.ReadOnlyField(source='author.last_name')'''
+    is_subscribed = serializers.BooleanField(default=True)
+    recipes = serializers.SerializerMethodField()
     recipes_count = serializers.SerializerMethodField()
+    #id = serializers.ReadOnlyField(source='author.id')
 
     class Meta:
         model = User
         fields = ('email', 'id', 'username', 'first_name',
                   'last_name', 'is_subscribed', 'recipes', 'recipes_count')
     
+    def get_recipes(self, obj):
+        queryset = self.context.get('request')
+        recipes_limit = queryset.query_params.get(
+            'recipes_limit',
+            DEFAULT_RECIPE_LIMIT
+        )
+
+        #recipes = obj.author.recipes.all().order_by('-id')[:int(recipes_limit)]
+        #return RecipeSubscriptionSerializer(recipes, many=True).data
+
+        return RecipeSubscriptionSerializer(
+            obj.recipes.all()[:int(recipes_limit)],
+            many=True
+        ).data
+
     def get_recipes_count(self, obj):
-        """Счётчик рецептов внутри ответа на подписку."""
-        author = User.objects.get(username=obj.username)
-        return Recipe.objects.filter(author=author).count()
+        """Счётчик рецептов."""
+        return Recipe.objects.filter(author=obj).count()
+    
+
