@@ -8,7 +8,6 @@ from rest_framework import (filters, generics, mixins, permissions, status,
 from rest_framework.decorators import action, api_view
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.response import Response
-from rest_framework.views import APIView
 
 from recipes.models import Favorite, Ingredient, Recipe, Tag, GroceryList
 from users.models import Subscribe, User
@@ -25,6 +24,7 @@ class CreateDestroyViewSet(mixins.CreateModelMixin,
                            mixins.DestroyModelMixin,
                            viewsets.GenericViewSet):
     """Кастомный вьюсет для создания и удаления экземпляров."""
+
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
     """Просмотр ингредиентов."""
@@ -75,15 +75,14 @@ class RecipeViewSet(viewsets.ModelViewSet):
             grocery.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-
     @action(detail=False,
             url_path='download_shopping_cart',
             methods=['get'],
-            permission_classes=[permissions.AllowAny])
+            permission_classes=[permissions.IsAuthenticated])
     def download_shopping_cart(self, request):
+        """Скачивание списка покупок."""
         return download_shopping_cart(request)
-    
-            
+
     @action(detail=True,
             url_path='favorite',
             methods=['post', 'delete'],
@@ -130,7 +129,6 @@ class CustomUserViewSet(UserViewSet):
     if self.action == 'list':
         permission_classes = [IsAuthenticated]'''
     
-
     @action(detail=True,
             url_path='subscribe',
             methods=['post', 'delete'],

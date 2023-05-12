@@ -59,6 +59,7 @@ class Recipe(models.Model):
     ingredients = models.ManyToManyField(
         Ingredient,
         through='RecipeIngredients',
+        related_name='recipe',
         verbose_name='Ингредиенты'
     )
 
@@ -134,9 +135,10 @@ class RecipeIngredients(models.Model):
 
     class Meta:
         verbose_name = 'Количество'
+        default_related_name = 'recipe_ingridients'
     
     def __str__(self):
-        return f'{self.recipe} {self.ingredient}'
+        return f'{self.recipe} {self.ingredient} {self.amount}'
 
 
 class GroceryList(models.Model):
@@ -155,6 +157,7 @@ class GroceryList(models.Model):
 
     class Meta:
         verbose_name_plural = 'Корзина покупок'
+        default_related_name = 'grocery_list'
         constraints = (
             models.UniqueConstraint(
                 fields=('user', 'recipe'),

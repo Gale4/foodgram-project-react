@@ -1,42 +1,37 @@
-import os
-import datetime
-from django.http import FileResponse
-
-from foodgram import settings
-from recipes.models import Ingredient, RecipeIngredients, GroceryList
+from django.http import HttpResponse
+from recipes.models import GroceryList, RecipeIngredients, Ingredient
 
 
 def download_shopping_cart(request):
-    user = request.user
-    file_path = os.path.join(
-        settings.MEDIA_ROOT,
-        'recipes/shopping_cart/',
-        str(user)
+    """Возвращает текстовый фаил со списком ингредиентов из списка покупок."""
+    grocery_list = GroceryList.objects.filter(user=request.user)
+    shopping_list = dict()
+    for purchase in grocery_list:
+        ingredients = RecipeIngredients.objects.filter(
+            recipe=purchase.recipe.id)
+        for ing in ingredients:
+            ingredient = Ingredient.objects.get(pk=ing.ingredient.id)
+            name = ingredient.name
+            measuring_unit = ingredient.measurement_unit
+            amount = ing.amount
+            if name not in shopping_list:
+                shopping_list[name] = {
+                    'name': name,
+                    'measurement_unit': measuring_unit,
+                    'amount': amount
+                }
+            else:
+                shopping_list[name]['amount'] += amount
+
+    content = (
+        [
+            f'{item["name"]} ({item["measurement_unit"]}) - {item["amount"]}\n'
+            for item in shopping_list.values()
+        ]
     )
-
-    os.makedirs(file_path, exist_ok=True)
-    file = os.path.join(
-        file_path,
-        str(datetime.datetime.now()) + '.txt'
+    filename = 'shopping_list.txt'
+    text_file = HttpResponse(content, content_type='text/plain')
+    text_file['Content-Disposition'] = (
+        'attachment; filename={0}'.format(filename)
     )
-
-    purchases = GroceryList.objects.filter(user=user)
-
-    with open(file, 'w') as f:
-        cart = dict()
-        for purchase in purchases:
-            ingredients = RecipeIngredients.objects.filter(
-                recipe=purchase.recipe.id
-            )
-            for r in ingredients:
-                i = Ingredient.objects.get(pk=r.ingredient.id)
-                point_name = f'{i.name} ({i.measurement_unit})'
-                if point_name in cart.keys():
-                    cart[point_name] += r.amount
-                else:
-                    cart[point_name] = r.amount
-
-        for name, amount in cart.items():
-            f.write(f'* {name} - {amount}\n')
-
-    return FileResponse(open(file, 'rb'), as_attachment=True)
+    return text_file
