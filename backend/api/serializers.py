@@ -3,7 +3,6 @@ import base64
 from django.core.files.base import ContentFile
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
-from rest_framework.validators import UniqueTogetherValidator
 
 from foodgram.settings import DEFAULT_RECIPE_LIMIT
 from recipes.models import (Favorite, GroceryList, Ingredient, Recipe,
@@ -19,7 +18,6 @@ class Base64ImageField(serializers.ImageField):
             format, imgstr = data.split(';base64,')
             ext = format.split('/')[-1]
             data = ContentFile(base64.b64decode(imgstr), name='temp.' + ext)
-
         return super().to_internal_value(data)
 
 
@@ -298,8 +296,9 @@ class SubscribeResponseSerializer(serializers.ModelSerializer):
         model = User
         fields = ('email', 'id', 'username', 'first_name',
                   'last_name', 'is_subscribed', 'recipes', 'recipes_count')
-    
+
     def get_recipes(self, obj):
+        """Отображение рецептов автора в подписках."""
         queryset = self.context.get('request')
         recipes_limit = queryset.query_params.get(
             'recipes_limit',

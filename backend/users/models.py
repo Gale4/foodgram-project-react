@@ -1,9 +1,13 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+from users.validators import UsernameValidator
+
 
 class User(AbstractUser):
     """Модель пользователя."""
+
+    username_validator = UsernameValidator()
 
     email = models.EmailField(
         max_length=254,
@@ -12,10 +16,11 @@ class User(AbstractUser):
     username = models.CharField(
         max_length=150,
         unique=True,
+        validators=[username_validator],
         verbose_name='Псевдоним'
     )
     first_name = models.CharField(
-        max_length=30,
+        max_length=150,
         verbose_name='Имя'
     )
     last_name = models.CharField(
@@ -23,7 +28,7 @@ class User(AbstractUser):
         verbose_name='Фамилия'
     )
     password = models.CharField(
-        max_length=128,
+        max_length=150,
     )
     
     class Meta:
@@ -37,12 +42,14 @@ class Subscribe(models.Model):
     subscriber = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='subscriber'
+        related_name='subscriber',
+        verbose_name='Подписчик'
     )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='author'
+        related_name='author',
+        verbose_name='Автор рецептов',
     )
 
     class Meta:

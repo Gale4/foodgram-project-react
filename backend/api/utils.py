@@ -33,6 +33,5 @@ def download_shopping_cart(request):
     filename = 'shopping_list.txt'
     text_file = HttpResponse(content, content_type='text/plain')
     text_file['Content-Disposition'] = (
-        'attachment; filename={0}'.format(filename)
-    )
+        'attachment; filename={0}'.format(filename))
     return text_file
