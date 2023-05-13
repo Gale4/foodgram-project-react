@@ -1,5 +1,6 @@
 from django.http import HttpResponse
-from recipes.models import GroceryList, RecipeIngredients, Ingredient
+
+from recipes.models import GroceryList, Ingredient, RecipeIngredients
 
 
 def download_shopping_cart(request):

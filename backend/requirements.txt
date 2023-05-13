@@ -5,7 +5,7 @@ djangorestframework-simplejwt==4.7.2
 djoser==2.1.0
 Pillow==9.5.0
 django-filter==2.4.0
-#?
+#Рекомендованные
 attrs==22.1.0
 eradicate==2.1.0
 flake8==5.0.4

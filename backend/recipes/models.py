@@ -181,7 +181,6 @@ class Favorite(models.Model):
         )
     
     class Meta:
-        verbose_name = 'Избранное'
         verbose_name_plural = 'Избранное'
         constraints = (
             models.UniqueConstraint(
