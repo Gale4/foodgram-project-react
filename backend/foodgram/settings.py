@@ -1,6 +1,9 @@
 import os
 from datetime import timedelta
 from pathlib import Path
+from dotenv import load_dotenv
+
+load_dotenv()
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -8,7 +11,10 @@ SECRET_KEY = 'django-insecure-o2vb_a2mgj%vfq+$q8f0%p-48052sqzin*2cevyu$&qjymj%de
 
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    '127.0.0.1',
+    'localhost',
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -21,6 +27,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'django_filters',
     'djoser',
+    'colorfield',
     'api',
     'recipes',
     'users',
@@ -122,8 +129,8 @@ DJOSER = {
     }
 }
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'static/')
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')

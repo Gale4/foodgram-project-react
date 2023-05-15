@@ -7,8 +7,6 @@ from users.validators import UsernameValidator
 class User(AbstractUser):
     """Модель пользователя."""
 
-    username_validator = UsernameValidator()
-
     email = models.EmailField(
         max_length=254,
         verbose_name='Почта'
@@ -16,7 +14,7 @@ class User(AbstractUser):
     username = models.CharField(
         max_length=150,
         unique=True,
-        validators=[username_validator],
+        validators=[UsernameValidator()],
         verbose_name='Псевдоним'
     )
     first_name = models.CharField(

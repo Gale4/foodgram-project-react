@@ -11,9 +11,8 @@ def download_shopping_cart(request):
         ingredients = RecipeIngredients.objects.filter(
             recipe=purchase.recipe.id)
         for ing in ingredients:
-            ingredient = Ingredient.objects.get(pk=ing.ingredient.id)
-            name = ingredient.name
-            measuring_unit = ingredient.measurement_unit
+            name = ing.ingredient.name
+            measuring_unit = ing.ingredient.measurement_unit
             amount = ing.amount
             if name not in shopping_list:
                 shopping_list[name] = {
@@ -28,8 +27,7 @@ def download_shopping_cart(request):
         [
             f'{item["name"]} ({item["measurement_unit"]}) - {item["amount"]}\n'
             for item in shopping_list.values()
-        ]
-    )
+        ])
     filename = 'shopping_list.txt'
     text_file = HttpResponse(content, content_type='text/plain')
     text_file['Content-Disposition'] = (

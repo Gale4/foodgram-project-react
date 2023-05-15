@@ -50,7 +50,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
     pagination_class = PageNumberPagination
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
-    lookup_field = 'id'
 
     def get_serializer_class(self):
         if self.action == 'create' or self.action == 'partial_update':

@@ -1,7 +1,10 @@
 import base64
 
+from django.db import transaction
 from django.core.files.base import ContentFile
 from djoser.serializers import UserCreateSerializer, UserSerializer
+from django.shortcuts import get_object_or_404
+from rest_framework.exceptions import ValidationError
 from rest_framework import serializers
 
 from foodgram.settings import DEFAULT_RECIPE_LIMIT
@@ -148,36 +151,35 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
 
     def add_ingredient(self, ingredients, recipe):
         """Добавление ингридиета при создании и изменении рецепта."""
-        for ingr in ingredients:
-            ingredient = Ingredient.objects.get(id=ingr['id'])
-            RecipeIngredients.objects.create(
+        RecipeIngredients.objects.bulk_create([
+            RecipeIngredients(
                 recipe=recipe,
-                ingredient=ingredient,
-                amount=ingr['amount'],
-            )
+                amount=ingredient['amount'],
+                ingredient=get_object_or_404(
+                    Ingredient,
+                    id=ingredient['id']),
+            ) for ingredient in ingredients])
 
+    @transaction.atomic
     def create(self, validated_data):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
         user = self.context.get('request').user
-        recipe = Recipe.objects.create(**validated_data, author=user)
+        recipe = Recipe.objects.create(author=user, **validated_data)
         recipe.tags.set(tags)
         self.add_ingredient(ingredients, recipe)
         return recipe
 
+    @transaction.atomic
     def update(self, instance, validated_data):
         ingredients = validated_data.pop('ingredients')
         tags = validated_data.pop('tags')
-        instance.name = validated_data.get('name')
-        instance.text = validated_data.get('text')
-        instance.image = validated_data.get('image')
-        instance.cooking_time = validated_data.get('cooking_time')
         instance.tags.clear()
         instance.tags.set(tags)
         instance.ingredients.clear()
         self.add_ingredient(ingredients, instance)
         instance.save()
-        return instance
+        return super().update(instance, validated_data)
 
 
 class RecipeDataSerializer(serializers.ModelSerializer):
@@ -196,12 +198,12 @@ class GrocerySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = GroceryList
-        fields = ('user', 'recipe')
+        fields = ('id', 'user', 'recipe')
 
     def validate(self, data):
         user = data['user']['id']
         recipe = data['recipe']['id']
-        if GroceryList.objects.filter(user=user, recipe__id=recipe).exists():
+        if GroceryList.objects.filter(user__id=user, recipe__id=recipe).exists():
             raise serializers.ValidationError({'errors': 'Уже в списке.'})
         return data
 
@@ -226,7 +228,7 @@ class FavoriteSerializer(serializers.ModelSerializer):
     def validate(self, data):
         user = data['user']['id']
         recipe = data['recipe']['id']
-        if Favorite.objects.filter(user=user, recipe__id=recipe).exists():
+        if Favorite.objects.filter(user__id=user, recipe__id=recipe).exists():
             raise serializers.ValidationError({'errors': 'Уже в избранном.'})
         return data
 
@@ -263,7 +265,7 @@ class SubscribeSerializer(serializers.ModelSerializer):
         subscriber = data['subscriber']['id']
         author = data['author']['id']
         if Subscribe.objects.filter(
-            subscriber=subscriber,
+            subscriber__id=subscriber,
             author__id=author
         ).exists():
             raise serializers.ValidationError(

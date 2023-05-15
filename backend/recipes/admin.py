@@ -9,6 +9,7 @@ class IngredientAmountInline(admin.TabularInline):
     model = RecipeIngredients
 
 
+@admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
     list_display = ('name', 'author', 'favorite_count')
     list_filter = ('author', 'name', 'tags')
@@ -19,25 +20,23 @@ class RecipeAdmin(admin.ModelAdmin):
         return obj.favorite.count()
 
 
+@admin.register(Ingredient)
 class IngredientAdmin(admin.ModelAdmin):
     list_display = ('name', 'measurement_unit')
     list_filter = ('name',)
 
 
+@admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
     list_display = ('name', 'color', 'slug')
 
 
+@admin.register(Favorite)
 class FavoriteAdmin(admin.ModelAdmin):
     list_display = ('recipe', 'user')
 
 
+@admin.register(GroceryList)
 class GroceryListAdmin(admin.ModelAdmin):
     list_display = ('recipe', 'user')
 
-
-admin.site.register(Recipe, RecipeAdmin)
-admin.site.register(Ingredient, IngredientAdmin)
-admin.site.register(Tag, TagAdmin)
-admin.site.register(Favorite, FavoriteAdmin)
-admin.site.register(GroceryList, GroceryListAdmin)
