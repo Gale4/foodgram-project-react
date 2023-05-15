@@ -5,11 +5,9 @@ djangorestframework-simplejwt==4.7.2
 djoser==2.1.0
 Pillow==9.5.0
 django-filter==2.4.0
-psycopg2-binary==2.8.6
 python-dotenv==0.19.0
 django-colorfield==0.8.0
 gunicorn==20.0.4
-psycopg2-binary==2.9.5
 #Рекомендованные
 attrs==22.1.0
 eradicate==2.1.0
