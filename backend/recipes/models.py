@@ -189,7 +189,7 @@ class Favorite(models.Model):
         related_name='favorite',
         on_delete=models.CASCADE,
         verbose_name='Рецепт')
-    
+
     class Meta:
         verbose_name_plural = 'Избранное'
         constraints = (
@@ -198,6 +198,6 @@ class Favorite(models.Model):
                 name='unique_favorite',
             ),
         )
-    
+
     def __str__(self) -> str:
         return f'{self.user.username}, {self.recipe}'

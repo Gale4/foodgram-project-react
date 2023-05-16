@@ -9,26 +9,21 @@ class User(AbstractUser):
 
     email = models.EmailField(
         max_length=254,
-        verbose_name='Почта'
-    )
+        verbose_name='Почта')
     username = models.CharField(
         max_length=150,
         unique=True,
         validators=[UsernameValidator()],
-        verbose_name='Псевдоним'
-    )
+        verbose_name='Псевдоним')
     first_name = models.CharField(
         max_length=150,
-        verbose_name='Имя'
-    )
+        verbose_name='Имя')
     last_name = models.CharField(
         max_length=150,
-        verbose_name='Фамилия'
-    )
+        verbose_name='Фамилия')
     password = models.CharField(
-        max_length=150,
-    )
-    
+        max_length=150)
+
     class Meta:
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
@@ -41,14 +36,12 @@ class Subscribe(models.Model):
         User,
         on_delete=models.CASCADE,
         related_name='subscriber',
-        verbose_name='Подписчик'
-    )
+        verbose_name='Подписчик')
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
         related_name='author',
-        verbose_name='Автор рецептов',
-    )
+        verbose_name='Автор рецептов')
 
     class Meta:
         verbose_name = 'Подписка'

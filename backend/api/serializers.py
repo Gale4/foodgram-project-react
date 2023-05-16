@@ -4,7 +4,6 @@ from django.db import transaction
 from django.core.files.base import ContentFile
 from djoser.serializers import UserCreateSerializer, UserSerializer
 from django.shortcuts import get_object_or_404
-from rest_framework.exceptions import ValidationError
 from rest_framework import serializers
 
 from foodgram.settings import DEFAULT_RECIPE_LIMIT
@@ -286,7 +285,7 @@ class SubscribeSerializer(serializers.ModelSerializer):
 
 class SubscribeResponseSerializer(serializers.ModelSerializer):
     """
-    Сериализатор списка подписок пользователя
+    Сериализатор списка подписок пользователя,
     и ответных данных на подписку.
     """
 
@@ -314,5 +313,3 @@ class SubscribeResponseSerializer(serializers.ModelSerializer):
     def get_recipes_count(self, obj):
         """Счётчик рецептов."""
         return obj.recipes.filter(author=obj).count()
-    
-
