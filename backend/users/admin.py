@@ -1,6 +1,7 @@
 from django.contrib import admin
 
-from .models import Subscribe, User
+from users.models import Subscribe, User
+
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
@@ -12,4 +13,3 @@ class UserAdmin(admin.ModelAdmin):
 @admin.register(Subscribe)
 class SubscribeAdmin(admin.ModelAdmin):
     list_filter = ('subscriber', 'author')
-

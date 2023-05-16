@@ -144,8 +144,7 @@ class RecipeCreateSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         serializer = RecipeSerializer(
             instance,
-            context={'request': self.context.get('request')}
-        )
+            context={'request': self.context.get('request')})
         return serializer.data
 
     def add_ingredient(self, ingredients, recipe):
@@ -202,15 +201,15 @@ class GrocerySerializer(serializers.ModelSerializer):
     def validate(self, data):
         user = data['user']['id']
         recipe = data['recipe']['id']
-        if GroceryList.objects.filter(user__id=user, recipe__id=recipe).exists():
+        if GroceryList.objects.filter(user__id=user,
+                                      recipe__id=recipe).exists():
             raise serializers.ValidationError({'errors': 'Уже в списке.'})
         return data
 
     def to_representation(self, instance):
         serializer = RecipeDataSerializer(
             instance.recipe,
-            context={'request': self.context.get('request')}
-        )
+            context={'request': self.context.get('request')})
         return serializer.data
 
 
@@ -249,12 +248,10 @@ class SubscribeSerializer(serializers.ModelSerializer):
 
     subscriber = serializers.IntegerField(
         source='subscriber.id',
-        write_only=True
-    )
+        write_only=True)
     author = serializers.IntegerField(
         source='author.id',
-        write_only=True
-    )
+        write_only=True)
 
     class Meta:
         model = Subscribe
@@ -265,15 +262,13 @@ class SubscribeSerializer(serializers.ModelSerializer):
         author = data['author']['id']
         if Subscribe.objects.filter(
             subscriber__id=subscriber,
-            author__id=author
+            author__id=author,
         ).exists():
             raise serializers.ValidationError(
-                {'errors': 'Вы уже подписаны на этого автора.'}
-                )
+                {'errors': 'Вы уже подписаны на этого автора.'})
         if subscriber == author:
             raise serializers.ValidationError(
-                {'errors': 'Нельзя подписаться на себя.'}
-            )
+                {'errors': 'Нельзя подписаться на себя.'})
         return data
 
     def create(self, validated_data):
@@ -284,10 +279,7 @@ class SubscribeSerializer(serializers.ModelSerializer):
 
 
 class SubscribeResponseSerializer(serializers.ModelSerializer):
-    """
-    Сериализатор списка подписок пользователя,
-    и ответных данных на подписку.
-    """
+    """Список подписок пользователя и ответных данных на подписку."""
 
     is_subscribed = serializers.BooleanField(default=True)
     recipes = serializers.SerializerMethodField()
@@ -303,12 +295,10 @@ class SubscribeResponseSerializer(serializers.ModelSerializer):
         queryset = self.context.get('request')
         recipes_limit = queryset.query_params.get(
             'recipes_limit',
-            DEFAULT_RECIPE_LIMIT
-        )
+            DEFAULT_RECIPE_LIMIT)
         return RecipeDataSerializer(
             obj.recipes.all()[:int(recipes_limit)],
-            many=True
-        ).data
+            many=True).data
 
     def get_recipes_count(self, obj):
         """Счётчик рецептов."""

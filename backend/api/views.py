@@ -11,14 +11,14 @@ from rest_framework.response import Response
 from recipes.models import Favorite, GroceryList, Ingredient, Recipe, Tag
 from users.models import Subscribe, User
 
-from .filters import IngredientSearchFilter, RecipeFilter
-from .permissions import IsAuthorOrReadOnly
-from .serializers import (CustomUserCreateSerializer, CustomUserSerializer,
-                          FavoriteSerializer, GrocerySerializer,
-                          IngredientSerializer, RecipeCreateSerializer,
-                          RecipeSerializer, SubscribeResponseSerializer,
-                          SubscribeSerializer, TagSerializer)
-from .utils import download_shopping_cart
+from api.filters import IngredientSearchFilter, RecipeFilter
+from api.permissions import IsAuthorOrReadOnly
+from api.serializers import (CustomUserCreateSerializer, CustomUserSerializer,
+                             FavoriteSerializer, GrocerySerializer,
+                             IngredientSerializer, RecipeCreateSerializer,
+                             RecipeSerializer, SubscribeResponseSerializer,
+                             SubscribeSerializer, TagSerializer)
+from api.utils import download_shopping_cart
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -153,9 +153,9 @@ class CustomUserViewSet(UserViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         if request.method == 'DELETE':
             subscribe = get_object_or_404(
-                    Subscribe,
-                    subscriber=request.user,
-                    author__id=id)
+                Subscribe,
+                subscriber=request.user,
+                author__id=id)
             subscribe.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
@@ -163,15 +163,11 @@ class CustomUserViewSet(UserViewSet):
             url_path='subscriptions',
             methods=['get'])
     def subscriptions(self, request):
-        """
-        Возвращает пользователей,
-        на которых подписан текущий пользователь.
-        """
+        """Список пользователей, на которых подписан текущий пользователь."""
         queryset = User.objects.filter(author__subscriber=request.user)
         pages = self.paginate_queryset(queryset)
         serializer = SubscribeResponseSerializer(
             pages,
             many=True,
-            context={'request': request}
-        )
+            context={'request': request})
         return self.get_paginated_response(serializer.data)

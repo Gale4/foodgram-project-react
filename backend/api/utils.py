@@ -1,6 +1,6 @@
 from django.http import HttpResponse
 
-from recipes.models import GroceryList, Ingredient, RecipeIngredients
+from recipes.models import GroceryList, RecipeIngredients
 
 
 def download_shopping_cart(request):
@@ -18,8 +18,7 @@ def download_shopping_cart(request):
                 shopping_list[name] = {
                     'name': name,
                     'measurement_unit': measuring_unit,
-                    'amount': amount
-                }
+                    'amount': amount}
             else:
                 shopping_list[name]['amount'] += amount
 
