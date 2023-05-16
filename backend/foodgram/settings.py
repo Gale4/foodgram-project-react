@@ -1,8 +1,10 @@
 import os
+
 from pathlib import Path
 from dotenv import load_dotenv
 
 load_dotenv()
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -68,8 +70,8 @@ DATABASES = {
         'USER': os.getenv('POSTGRES_USER', default='postgres'),
         'PASSWORD': os.getenv('POSTGRES_PASSWORD', default='password'),
         'HOST': os.getenv('DB_HOST', default='db'),
-        'PORT': os.getenv('DB_PORT', default='5432')
-    }
+        'PORT': os.getenv('DB_PORT', default='5432'),
+    },
 }
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -128,7 +130,7 @@ DJOSER = {
     'PERMISSIONS': {
         'user': ['djoser.permissions.CurrentUserOrAdminOrReadOnly'],
         'user_list': ['rest_framework.permissions.AllowAny'],
-    }
+    },
 }
 
 STATIC_URL = '/static/'

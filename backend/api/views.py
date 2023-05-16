@@ -42,10 +42,8 @@ class TagViewSet(viewsets.ReadOnlyModelViewSet):
 
 
 class RecipeViewSet(viewsets.ModelViewSet):
-    """
-    Просмотр и редактирование рецептов
-    добавление в список покупок и избранного.
-    """
+    """Работа с рецептами, списоком покупок и избранным."""
+
     queryset = Recipe.objects.all()
     pagination_class = PageNumberPagination
     filter_backends = (DjangoFilterBackend,)
@@ -84,7 +82,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 user=request.user,
                 recipe__id=pk)
             grocery.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response('Удален из покупок', status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False,
             url_path='download_shopping_cart',
@@ -111,7 +109,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 user=request.user,
                 recipe__id=pk)
             favorite.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+            return Response('Удален из избранного', status=status.HTTP_204_NO_CONTENT)
 
 
 class CustomUserViewSet(UserViewSet):
