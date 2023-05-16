@@ -9,7 +9,7 @@ from recipes.models import Ingredient, Tag
 TAGS = (
     ('Завтрак', '#E26C2D', 'breakfast'),
     ('Обед', '#49B64E', 'lunch'),
-    ('Ужин', '#8775D2', 'dinner'),)
+    ('Ужин', '#8775D2', 'dinner'))
 
 
 class Command(BaseCommand):
@@ -35,7 +35,6 @@ class Command(BaseCommand):
             Tag.objects.get_or_create(
                 name=name,
                 color=color,
-                slug=slug
-            )
+                slug=slug)
         self.stdout.write(
             self.style.SUCCESS('Ингредиенты и тэги импортированны.'))

@@ -82,7 +82,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 user=request.user,
                 recipe__id=pk)
             grocery.delete()
-            return Response('Удален из покупок', status=status.HTTP_204_NO_CONTENT)
+            return Response('Удален из покупок',
+                            status=status.HTTP_204_NO_CONTENT)
 
     @action(detail=False,
             url_path='download_shopping_cart',
@@ -109,7 +110,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 user=request.user,
                 recipe__id=pk)
             favorite.delete()
-            return Response('Удален из избранного', status=status.HTTP_204_NO_CONTENT)
+            return Response('Удален из избранного',
+                            status=status.HTTP_204_NO_CONTENT)
 
 
 class CustomUserViewSet(UserViewSet):
