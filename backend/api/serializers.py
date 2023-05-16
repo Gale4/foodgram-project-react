@@ -102,9 +102,7 @@ class RecipeSerializer(serializers.ModelSerializer):
     is_favorited = serializers.SerializerMethodField()
     is_in_shopping_cart = serializers.SerializerMethodField()
     author = CustomUserSerializer(read_only=True)
-    tags = serializers.PrimaryKeyRelatedField(
-        queryset=Tag.objects.all(),
-        many=True)
+    tags = TagSerializer(many=True, read_only=True)
 
     class Meta:
         model = Recipe

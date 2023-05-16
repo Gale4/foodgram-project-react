@@ -77,7 +77,6 @@ class Recipe(models.Model):
         verbose_name='Ингредиенты')
     tags = models.ManyToManyField(
         Tag,
-        through='TagRecipe',
         verbose_name='Тэги')
     image = models.ImageField(
         upload_to='recipes/images/',
@@ -100,30 +99,6 @@ class Recipe(models.Model):
 
     def __str__(self) -> str:
         return self.name
-
-
-class TagRecipe(models.Model):
-    """Связь тега с рецептом."""
-
-    tag = models.ForeignKey(
-        Tag,
-        on_delete=models.CASCADE,
-        related_name='tag_recipe')
-    recipe = models.ForeignKey(
-        Recipe,
-        on_delete=models.CASCADE,
-        related_name='tags_recipe')
-
-    class Meta:
-        constraints = (
-            models.UniqueConstraint(
-                fields=('recipe_id', 'tag_id'),
-                name='unique_tag',
-            ),
-        )
-
-    def __str__(self) -> str:
-        return f'{self.tag} {self.recipe}'
 
 
 class RecipeIngredients(models.Model):
