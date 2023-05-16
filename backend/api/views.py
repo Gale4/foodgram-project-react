@@ -19,6 +19,7 @@ from api.serializers import (CustomUserCreateSerializer, CustomUserSerializer,
                              RecipeSerializer, SubscribeResponseSerializer,
                              SubscribeSerializer, TagSerializer)
 from api.utils import download_shopping_cart
+from api.pagination import CustomPagination
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -45,7 +46,7 @@ class RecipeViewSet(viewsets.ModelViewSet):
     """Работа с рецептами, списоком покупок и избранным."""
 
     queryset = Recipe.objects.all()
-    pagination_class = PageNumberPagination
+    pagination_class = CustomPagination
     filter_backends = (DjangoFilterBackend,)
     filterset_class = RecipeFilter
 
@@ -118,7 +119,7 @@ class CustomUserViewSet(UserViewSet):
     """Работа с пользователетями и подписками."""
 
     queryset = User.objects.all()
-    pagination_class = PageNumberPagination
+    pagination_class = CustomPagination
     permission_classes = (permissions.AllowAny,)
 
     def get_serializer_class(self):
